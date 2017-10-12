@@ -7,9 +7,9 @@
 # SHOULD NOT be hardcoded in any code derived from this sample:
 #
 # AZURE_TENANT_ID: with your Azure Active Directory tenant id or domain
-# AZURE_CLIENT_ID: with your Azure Active Directory Application Client ID
-# AZURE_CLIENT_OID: with your Azure Active Directory Application Client Object ID
-# AZURE_CLIENT_SECRET: with your Azure Active Directory Application Secret
+# AZURE_CLIENT_ID: with your Azure Active Directory Application ID
+# AZURE_CLIENT_OID: with your Azure Active Directory Service Principle Object ID
+# AZURE_CLIENT_SECRET: with your Azure Active Directory Application Key
 # AZURE_SUBSCRIPTION_ID: with your Azure Subscription Id
 # AZURE_STORAGE_ACCOUNT_NAME: with your storage account name
 # AZURE_STORAGE_ACCOUNT_KEY: with your storage account key
