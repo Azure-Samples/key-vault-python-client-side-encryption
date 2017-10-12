@@ -64,7 +64,8 @@ def keyvaultsample(f):
 
 def run_all_samples(samples):
     """
-    runs all sample methods (methods mar5ified on the command line
+    runs all sample methods (methods marked with @keyvaultsample) on the specified samples objects,
+    filtering to any sample methods specified on the command line
     :param samples: a list of sample objects
     :return: None 
     """
