@@ -131,32 +131,35 @@ class BlobEncryptionSample(KeyVaultSampleBase):
     @keyvaultsample
     def put_get_encrypted_blob_wrapped_aes_secret_kek(self):
         """
-        wraps and stores an AES key encryption key with an HSM key in key vault and utilizes that key for client side storage encryption
+        wraps and stores an AES key encryption key with an key in key vault and utilizes that key for client side storage encryption
         """
 
         container_name = self._create_container()
         block_blob_name = self._get_blob_reference(prefix='block_blob')
 
-        # create a vault and an HSM key which will be used to protect blob KEKs
+        # create a vault and a key which will be used to wrap blob KEKs.
+        # Note: This example uses a software basede RSA key so that it can be run on a standard vault
+        # however this approach would more likely be used to wrap the KEK with hardware based
+        # HSM key additional protection of the KEK
         vault = self.create_vault()
-        hsm_key = self.keyvault_data_client.create_key(vault_base_url=vault.properties.vault_uri,
-                                                       key_name='storage-sample-HSM',
-                                                       kty='RSA-HSM')
-        hsm_key_id = KeyId(hsm_key.key.kid)
+        kwk_key = self.keyvault_data_client.create_key(vault_base_url=vault.properties.vault_uri,
+                                                       key_name='storage-sample-KWK',
+                                                       kty='RSA')
+        kwk_key_id = KeyId(kwk_key.key.kid)
 
-        # generate a kek for blobs wrap it using the HSM key and store as a base64 string
+        # generate a kek for blobs and wrap it using the wrapping key and store as a base64 string
         # secret in the vault. Also note the full id (including version) of the wrapping
         # key is stored as a tag on the secret to enable unwrapping even if the hsm_key is rotated
         kek = urandom(32)
-        wrapped_kek = self.keyvault_data_client.wrap_key(vault_base_url=hsm_key_id.vault,
-                                                         key_name=hsm_key_id.name,
-                                                         key_version=hsm_key_id.version,
+        wrapped_kek = self.keyvault_data_client.wrap_key(vault_base_url=kwk_key_id.vault,
+                                                         key_name=kwk_key_id.name,
+                                                         key_version=kwk_key_id.version,
                                                          algorithm='RSA-OAEP-256',
                                                          value=kek).result
         secret = self.keyvault_data_client.set_secret(vault_base_url=vault.properties.vault_uri,
                                                       secret_name='storage-sample-KEK',
                                                       value=b64encode(wrapped_kek).decode(),
-                                                      tags={'kek-id': hsm_key_id.id})
+                                                      tags={'kwk-id': kwk_key_id.id})
 
         # AESKeyWrapper implements the key encryption key interface outlined
         # in the create_blob_from_* documentation on each service. Setting
@@ -180,8 +183,8 @@ class BlobEncryptionSample(KeyVaultSampleBase):
                 sid = SecretId(kid)
                 secret_bundle = self.keyvault_data_client.get_secret(sid.vault, sid.name, sid.version)
                 # get the tag storing the id to the key wrapping the AES kek and unwrap the kek
-                if secret_bundle.tags and 'kek-id' in secret_bundle.tags:
-                    kek_id=KeyId(secret_bundle.tags['kek-id'])
+                if secret_bundle.tags and 'kwk-id' in secret_bundle.tags:
+                    kek_id=KeyId(secret_bundle.tags['kwk-id'])
                     kek_value = self.keyvault_data_client.unwrap_key(vault_base_url=kek_id.vault,
                                                                      key_name=kek_id.name,
                                                                      key_version=kek_id.version,

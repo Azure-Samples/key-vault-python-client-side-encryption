@@ -167,7 +167,7 @@ class KeyVaultSampleBase(object):
         
         policy = AccessPolicyEntry(self.config.tenant_id, self.config.client_oid, permissions)
 
-        properties = VaultProperties(self.config.tenant_id, Sku(name='premium'), access_policies=[policy])
+        properties = VaultProperties(self.config.tenant_id, Sku(name='standard'), access_policies=[policy])
 
         parameters = VaultCreateOrUpdateParameters(self.config.location, properties)
         parameters.properties.enabled_for_deployment = True
