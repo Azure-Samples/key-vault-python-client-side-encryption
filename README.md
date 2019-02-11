@@ -5,7 +5,7 @@ Encryption of Blobs using Key Vault Python SDK
 
 ## Features
 
-* This sample shows you how to use an AES256 key to encrypt data stored as a Blob in Azure Storage
+* This sample shows you how to use Client side encryption of Azure blobs protected by a AES key stored in keyvault
 
 ### Quickstart
 (Add steps to get up and running quickly)
