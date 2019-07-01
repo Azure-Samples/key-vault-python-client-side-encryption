@@ -32,10 +32,12 @@ from base64 import b64encode, b64decode
 
 # Sample implementations of the encryption-related interfaces.
 
+
 class AESKeyWrapper:
     """
     AESKeyWrapper implements the key encryption key interface outlined in the create_blob_from_* documentation 
     """
+
     def __init__(self, kid, kek):
         self.kek = kek
         self.backend = default_backend()
@@ -64,6 +66,7 @@ class KeyVaultAESKeyResolver:
     """
     KeyVaultAESKeyResolver provides a sample implementation of the key_resolver_function used by blob clients
     """
+
     def __init__(self, key_vault_client):
         self.keys = {}
         self.client = key_vault_client
@@ -73,8 +76,10 @@ class KeyVaultAESKeyResolver:
             key = self.keys[kid]
         else:
             sid = SecretId(kid)
-            secret_bundle = self.client.get_secret(sid.vault, sid.name, sid.version)
-            key = AESKeyWrapper(secret_bundle.id, kek=b64decode(secret_bundle.value))
+            secret_bundle = self.client.get_secret(
+                sid.vault, sid.name, sid.version)
+            key = AESKeyWrapper(
+                secret_bundle.id, kek=b64decode(secret_bundle.value))
             self.keys[secret_bundle.id] = key
         return key
 
@@ -112,7 +117,8 @@ class BlobEncryptionSample(KeyVaultSampleBase):
 
         # store encrypted data
         data = urandom(13 * self.block_blob_service.MAX_SINGLE_PUT_SIZE + 1)
-        self.block_blob_service.create_blob_from_bytes(container_name, block_blob_name, data)
+        self.block_blob_service.create_blob_from_bytes(
+            container_name, block_blob_name, data)
 
         # Setting the key_resolver_function will tell the service to automatically
         # try to decrypt retrieved blobs. The key_resolver is a function that
@@ -121,10 +127,12 @@ class BlobEncryptionSample(KeyVaultSampleBase):
 
         # Downloading works as usual with support for decrypting both entire blobs
         # and decrypting range gets.
-        blob_full = self.block_blob_service.get_blob_to_bytes(container_name, block_blob_name)
+        blob_full = self.block_blob_service.get_blob_to_bytes(
+            container_name, block_blob_name)
         blob_range = self.block_blob_service.get_blob_to_bytes(container_name, block_blob_name,
-                                                start_range=len(data)//2 + 5,
-                                                end_range=(3*len(data)//4) + 1)
+                                                               start_range=len(
+                                                                   data)//2 + 5,
+                                                               end_range=(3*len(data)//4) + 1)
 
         self.block_blob_service.delete_container(container_name)
 
@@ -158,7 +166,8 @@ class BlobEncryptionSample(KeyVaultSampleBase):
                                                          value=kek).result
         secret = self.keyvault_data_client.set_secret(vault_base_url=vault.properties.vault_uri,
                                                       secret_name='storage-sample-KEK',
-                                                      value=b64encode(wrapped_kek).decode(),
+                                                      value=b64encode(
+                                                          wrapped_kek).decode(),
                                                       tags={'kwk-id': kwk_key_id.id})
 
         # AESKeyWrapper implements the key encryption key interface outlined
@@ -170,7 +179,8 @@ class BlobEncryptionSample(KeyVaultSampleBase):
 
         # store encrypted data
         data = urandom(13 * self.block_blob_service.MAX_SINGLE_PUT_SIZE + 1)
-        self.block_blob_service.create_blob_from_bytes(container_name, block_blob_name, data)
+        self.block_blob_service.create_blob_from_bytes(
+            container_name, block_blob_name, data)
 
         # create a method which will resolve the wrapped AES kek's stored as secrets
         # in key vault for the blob service, unwrapping them and caching them locally
@@ -181,17 +191,18 @@ class BlobEncryptionSample(KeyVaultSampleBase):
                 key = key_cache[kid]
             else:
                 sid = SecretId(kid)
-                secret_bundle = self.keyvault_data_client.get_secret(sid.vault, sid.name, sid.version)
+                secret_bundle = self.keyvault_data_client.get_secret(
+                    sid.vault, sid.name, sid.version)
                 # get the tag storing the id to the key wrapping the AES kek and unwrap the kek
                 if secret_bundle.tags and 'kwk-id' in secret_bundle.tags:
-                    kek_id=KeyId(secret_bundle.tags['kwk-id'])
+                    kek_id = KeyId(secret_bundle.tags['kwk-id'])
                     kek_value = self.keyvault_data_client.unwrap_key(vault_base_url=kek_id.vault,
                                                                      key_name=kek_id.name,
                                                                      key_version=kek_id.version,
                                                                      algorithm='RSA-OAEP-256',
                                                                      value=b64decode(secret_bundle.value)).result
                 else:
-                    kek_value=b64decode(secret_bundle.value)
+                    kek_value = b64decode(secret_bundle.value)
                 key = AESKeyWrapper(secret_bundle.id, kek=kek_value)
                 key_cache[secret_bundle.id] = key
             return key
@@ -203,9 +214,11 @@ class BlobEncryptionSample(KeyVaultSampleBase):
 
         # Downloading works as usual with support for decrypting both entire blobs
         # and decrypting range gets.
-        blob_full = self.block_blob_service.get_blob_to_bytes(container_name, block_blob_name)
+        blob_full = self.block_blob_service.get_blob_to_bytes(
+            container_name, block_blob_name)
         blob_range = self.block_blob_service.get_blob_to_bytes(container_name, block_blob_name,
-                                                               start_range=len(data) // 2 + 5,
+                                                               start_range=len(
+                                                                   data) // 2 + 5,
                                                                end_range=(3 * len(data) // 4) + 1)
 
         self.block_blob_service.delete_container(container_name)
@@ -220,6 +233,7 @@ class BlobEncryptionSample(KeyVaultSampleBase):
         container_name = self._get_resource_reference(prefix)
         self.block_blob_service.create_container(container_name)
         return container_name
+
 
 if __name__ == "__main__":
     run_all_samples([BlobEncryptionSample()])
